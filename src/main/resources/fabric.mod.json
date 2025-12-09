@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "buildprojekthelper",
+	"version": "${version}",
+	"name": "buildprojekthelper",
+	"description": "A Interface to help you to complete your MC Project",
+	"authors": [
+		"twentyseven"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/buildprojekthelper/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.buildprojekthelpermod.Buildprojekthelper"
+		],
+		"fabric-datagen": [
+			"net.buildprojekthelpermod.BuildprojekthelperDataGenerator"
+		],
+        "client":[
+          "net.buildprojekthelpermod.buildprojekthelperclient"
+        ]
+
+	},
+	"mixins": [
+		"buildprojekthelper.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.1",
+		"minecraft": "~1.21.10",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
