@@ -27,7 +27,7 @@ public class BuildProject {
         this.name = name;
     }
 
-    // Wandelt Strings zurück in echte Blöcke für die GUI
+
     public Map<Block, Integer> getBlockMap() {
         Map<Block, Integer> map = new HashMap<>();
         for (Map.Entry<String, Integer> entry : requiredBlocks.entrySet()) {
@@ -37,7 +37,7 @@ public class BuildProject {
         return map;
     }
 
-    // Speichert echte Blöcke als Strings
+
     public void setBlockMap(Map<Block, Integer> map) {
         this.requiredBlocks.clear();
         for (Map.Entry<Block, Integer> entry : map.entrySet()) {
@@ -46,7 +46,6 @@ public class BuildProject {
         }
     }
 
-    // Hilfsmethode zum direkten Hinzufügen
     public void addBlock(Block block, int amount) {
         String id = Registries.BLOCK.getId(block).toString();
         this.requiredBlocks.put(id, amount);

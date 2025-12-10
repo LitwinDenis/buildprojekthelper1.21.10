@@ -26,8 +26,6 @@ public class ProjectHelperScreen extends Screen {
     private BuildListWidget buildListWidget;
     private TextFieldWidget searchField;
     private TextFieldWidget amountField;
-
-    // Neues Projekt UI
     private TextFieldWidget newProjectNameField;
     private TextFieldWidget currentProjectNameField;
     private boolean isCreatingProject = false;
@@ -292,18 +290,17 @@ public class ProjectHelperScreen extends Screen {
         if (isCreatingProject && newProjectNameField.isVisible()) {
             if (newProjectNameField.keyPressed(input)) return true;
 
-            // ENTER gedrückt
+            // ENTER
             if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
                 String name = newProjectNameField.getText();
                 if (!name.isEmpty()) {
                     saveCurrentProjectData();
                     projectManager.createNewProject(name);
 
-                    // Reset
+
                     isCreatingProject = false;
                     newProjectNameField.setVisible(false);
 
-                    // WICHTIG: Das alte Feld wieder zeigen!
                     currentProjectNameField.setVisible(true);
 
                     reloadScreenData();
@@ -332,9 +329,9 @@ public class ProjectHelperScreen extends Screen {
         }
 
 
-        //Entferne der Blöcke aus der Liste
+
         if (keyCode == GLFW.GLFW_KEY_Q) {
-            // Mausposition holen und skalieren
+
             double mouseX = client.mouse.getX() * ((double)this.width / client.getWindow().getFramebufferWidth());
             double mouseY = client.mouse.getY() * ((double)this.height / client.getWindow().getFramebufferHeight());
 
@@ -342,13 +339,11 @@ public class ProjectHelperScreen extends Screen {
             Block targetBlock = buildListWidget.getBlockAt(mouseX, mouseY);
 
             if (targetBlock != null) {
-                // Löschen!
                 requiredBlocksMap.remove(targetBlock);
 
 
                 client.getSoundManager().play(net.minecraft.client.sound.PositionedSoundInstance.master(net.minecraft.sound.SoundEvents.ENTITY_ITEM_PICKUP, 1.0F));
 
-                // Speichern und Ansicht aktualisieren
                 saveCurrentProjectData();
                 this.init();
 
@@ -378,12 +373,12 @@ public class ProjectHelperScreen extends Screen {
         if (!isCreatingProject) {
             BuildProject current = projectManager.getCurrentProject();
 
-            // Status sicher abrufen
+
             String status = projectManager.getProjectStatus();
-            String title = (current != null) ? current.getName() : "Kein Projekt";
+            String title = (current != null) ? current.getName() : "No Project";
             context.drawCenteredTextWithShadow(textRenderer, title + " (" + status + ")", this.width / 2, 10, 0xFFFFFF);
         } else {
-            context.drawCenteredTextWithShadow(textRenderer, "Neuer Projektname:", this.width / 2, -5, 0xFFAAAA);
+            context.drawCenteredTextWithShadow(textRenderer, "New Projectname:", this.width / 2, -5, 0xFFAAAA);
         }
 
         super.render(context, mouseX, mouseY, tickDelta);

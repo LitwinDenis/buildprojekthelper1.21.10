@@ -10,7 +10,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import org.lwjgl.opengl.GL11;
-import net.minecraft.client.option.GameOptions;
+
 
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +19,6 @@ public class BuildHudRenderer implements HudRenderCallback {
 
     private final ProjectManager projectManager;
     private final MinecraftClient client;
-    // SLOT_SIZE wird unten lokal definiert, kann hier weg oder bleiben
 
     public BuildHudRenderer(MinecraftClient client) {
         this.projectManager = ProjectManager.getInstance();
@@ -47,62 +46,58 @@ public class BuildHudRenderer implements HudRenderCallback {
 
     @Override
     public void onHudRender(DrawContext drawContext, RenderTickCounter renderTickCounter) {
-        try {
-            if (client.player == null) return;
+        if (client.player == null) return;
 
-            BuildProject currentProject = projectManager.getCurrentProject();
-            if (currentProject == null) return;
+        BuildProject currentProject = projectManager.getCurrentProject();
+        if (currentProject == null) return;
 
-            // Hier würde es crashen, wenn wir den Fix in BuildProject nicht hätten
-            Set<Block> pinnedBlocks = currentProject.getPinnedBlocks();
 
-            if (pinnedBlocks == null || pinnedBlocks.isEmpty()) return;
+        Set<Block> pinnedBlocks = currentProject.getPinnedBlocks();
 
-            Map<Block, Integer> allRequirements = currentProject.getBlockMap();
-            if (allRequirements == null) return;
+        if (pinnedBlocks == null || pinnedBlocks.isEmpty()) return;
 
-            int startX = 20;
-            int startY = 20;
-            int yOffset = 0;
-            final int SLOT_SIZE = 20;
+        Map<Block, Integer> allRequirements = currentProject.getBlockMap();
+        if (allRequirements == null) return;
 
-            for (Block block : pinnedBlocks) {
-                if (block == null) continue;
+        int startX = 20;
+        int startY = 20;
+        int yOffset = 0;
+        final int SLOT_SIZE = 20;
 
-                int required = allRequirements.getOrDefault(block, 0);
-                int currentHeldCount = countItemsInInventory(block);
-                ItemStack stack = new ItemStack(block);
+        for (Block block : pinnedBlocks) {
+            if (block == null) continue;
 
-                String fullDisplayString = currentHeldCount + "/" + required;
+            int required = allRequirements.getOrDefault(block, 0);
+            int currentHeldCount = countItemsInInventory(block);
+            ItemStack stack = new ItemStack(block);
 
-                int textColor;
-                if (currentHeldCount >= required) {
-                    textColor = 0xFF00FF00;
-                } else if (currentHeldCount == 0) {
-                    textColor = 0xFFFF4444;
-                } else {
-                    textColor = 0xFFFFFFFF;
-                }
+            String fullDisplayString = currentHeldCount + "/" + required;
 
-                drawContext.drawItem(stack, startX, startY + yOffset);
-
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-                drawContext.drawText(
-                        client.textRenderer,
-                        Text.literal(fullDisplayString),
-                        startX + 22,
-                        startY + yOffset + 6,
-                        textColor,
-                        true
-                );
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
-
-                yOffset += SLOT_SIZE;
+            int textColor;
+            if (currentHeldCount >= required) {
+                textColor = 0xFF00FF00;
+            } else if (currentHeldCount == 0) {
+                textColor = 0xFFFF4444;
+            } else {
+                textColor = 0xFFFFFFFF;
             }
-        } catch (Exception e) {
-            // Falls DOCH ein Fehler passiert: Fehler drucken, aber NICHT abstürzen!
-            System.out.println("HUD Error: " + e.getMessage());
-            // e.printStackTrace(); // Kannst du einkommentieren für mehr Details
+
+            drawContext.drawItem(stack, startX, startY + yOffset);
+
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            drawContext.drawText(
+                    client.textRenderer,
+                    Text.literal(fullDisplayString),
+                    startX + 22,
+                    startY + yOffset + 6,
+                    textColor,
+                    true
+            );
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
+
+            yOffset += SLOT_SIZE;
         }
+
+
     }
 }

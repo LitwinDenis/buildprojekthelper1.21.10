@@ -12,6 +12,8 @@ import net.buildprojekthelpermod.gui.ProjectHelperScreen;
 import net.buildprojekthelpermod.data.ProjectManager;
 import net.buildprojekthelpermod.client.BuildHudRenderer; // Der neue Renderer
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.buildprojekthelpermod.data.ProjectManager;
 
 
 public class buildprojekthelperclient implements ClientModInitializer {
@@ -21,29 +23,41 @@ public class buildprojekthelperclient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        // Keybind registrieren
+
         OPEN_GUI_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.buildprojekthelper.open_gui",   // Übersetzungsschlüssel
-                InputUtil.Type.KEYSYM,              // Eingabetyp
-                GLFW.GLFW_KEY_P,                    // Taste
-                KeyBinding.Category.MISC            // Kategorie (kein String mehr!)
+                "key.buildprojekthelper.open_gui",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_P,
+                KeyBinding.Category.MISC
         ));
 
-        // Event für Keybind
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
 
             if (client.player == null) return;
 
             while (OPEN_GUI_KEY.wasPressed()) {
                 client.player.sendMessage(
-                        Text.literal("§aBuildProjektHelper GUI wird geöffnet..."),
+                        Text.literal("§aBuildProjektHelper GUI is opening..."),
                         false
                 );
 
                 client.setScreen(new ProjectHelperScreen());
 
-                // client.setScreen(new DeinGuiScreen());
             }
+
+        });
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            System.out.println("Welt betreten -> Lade Projekte...");
+            ProjectManager.getInstance().load();
+        });
+
+        // EVENT: Wenn der Spieler die Welt verlässt (Optional, zum Speichern/Aufräumen)
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            System.out.println("Welt verlassen -> Speichere Projekte...");
+            ProjectManager.getInstance().save();
+            // Optional: Manager resetten, damit im Hauptmenü nichts angezeigt wird
+            // ProjectManager.getInstance().clearAll();
         });
 
         MinecraftClient client = MinecraftClient.getInstance();

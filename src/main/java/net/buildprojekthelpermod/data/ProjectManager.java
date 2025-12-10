@@ -4,8 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.server.integrated.IntegratedServer;
 
 import java.io.*;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -15,7 +18,6 @@ public class ProjectManager {
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("build_projects.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // 1. Die einzige Instanz (Singleton)
     private static ProjectManager INSTANCE;
 
     // Diese Methode gibt IMMER dasselbe Objekt zurück
@@ -29,34 +31,57 @@ public class ProjectManager {
     private List<BuildProject> projects = new ArrayList<>();
     private int currentProjectIndex = 0;
 
-    // 2. WICHTIG: Der Konstruktor muss PRIVATE sein!
-    // So kann niemand von außen "new ProjectManager()" aufrufen.
+    private String sanitizeFileName(String name) {
+        return name.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+    }
+
+
+    private File getSaveFile() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        File configDir = new File(client.runDirectory, "config/buildprojekthelper"); // Ordner für deine Mod
+        if (!configDir.exists()) {
+            configDir.mkdirs();
+        }
+
+        String fileName = "default_projects.json"; // Fallback (z.B. Hauptmenü)
+
+
+        if (client.getCurrentServerEntry() != null) {
+            String ip = client.getCurrentServerEntry().address;
+            fileName = "server_" + sanitizeFileName(ip) + ".json";
+        }
+
+        else if (client.isInSingleplayer()) {
+            IntegratedServer server = client.getServer();
+            if (server != null) {
+                String levelName = server.getSaveProperties().getLevelName();
+                fileName = "local_" + sanitizeFileName(levelName) + ".json";
+            }
+        }
+
+        return new File(configDir, fileName);
+    }
+
     private ProjectManager() {
         load();
-        // Falls leer, Standard-Projekt anlegen
+
         if (projects.isEmpty()) {
-            projects.add(new BuildProject("Mein Projekt"));
+            projects.add(new BuildProject("My Project"));
             save();
         }
     }
 
     public void save() {
-        try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
-            GSON.toJson(projects, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        File file = getSaveFile();
     }
 
     public void load() {
-        if (!Files.exists(CONFIG_PATH)) return;
+        File file = getSaveFile();
 
-        try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
-            projects = GSON.fromJson(reader, new TypeToken<List<BuildProject>>() {
-            }.getType());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.projects.clear();
+        this.currentProjectIndex = 0;
+
+        if (!file.exists()) return;
     }
 
     public BuildProject getCurrentProject() {
