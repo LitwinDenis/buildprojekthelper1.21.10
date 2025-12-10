@@ -103,6 +103,20 @@ public class ProjectManager {
         if (projects.isEmpty()) return "0/0";
         return (currentProjectIndex + 1) + "/" + projects.size();
     }
+    public void deleteCurrentProject(){
+        if (projects.isEmpty() || currentProjectIndex < 0 || currentProjectIndex >= projects.size()){
+            return;
+        }
+
+        projects.remove(currentProjectIndex);
+
+        if (projects.isEmpty()) {
+            currentProjectIndex = 0;
+        }else if (currentProjectIndex >= projects.size()) {
+            currentProjectIndex = projects.size() -1;
+        }
+        save();
+    }
 }
 
 

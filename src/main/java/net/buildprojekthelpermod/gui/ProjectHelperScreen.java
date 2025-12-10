@@ -14,6 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.client.gui.Click;
 import org.lwjgl.glfw.GLFW;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,6 +75,8 @@ public class ProjectHelperScreen extends Screen {
         int leftHeight = this.height - (margin * 3 + 20 + topBarHeight);
         int centerX = this.width / 2;
 
+        BuildProject curProj = projectManager.getCurrentProject();
+
         // --- BUTTONS ---
         String prevName = projectManager.getPreviousProjectName();
         String nextName = projectManager.getNextProjectName();
@@ -106,7 +109,24 @@ public class ProjectHelperScreen extends Screen {
             newProjectNameField.setFocused(true);
 
             this.setFocused(newProjectNameField);
-        }).dimensions(centerX + 190, 5, 20, 20).build());
+        }).dimensions(centerX + 145, 5, 20, 20).build());
+
+
+        ButtonWidget deleteButton = ButtonWidget.builder(Text.literal("X"), b -> {
+            if (isShiftPressed()) {
+                projectManager.deleteCurrentProject();
+                reloadScreenData();
+            } else {
+                if (this.client != null && this.client.player != null) {
+                    this.client.player.sendMessage(Text.literal("§cHold shift!"), true);
+                }
+            }
+        }).dimensions(centerX + 170, 5, 20, 20).build();
+
+        if (curProj == null) {
+            deleteButton.active = false;
+        }
+        this.addDrawableChild(deleteButton);
 
         BuildProject current = projectManager.getCurrentProject();
         String status = projectManager.getProjectStatus();
@@ -241,6 +261,11 @@ public class ProjectHelperScreen extends Screen {
         if (isDragging) return true;
         return super.mouseDragged(click, offsetX, offsetY);
     }
+    private boolean isShiftPressed() {
+        long handle = this.client.getWindow().getHandle();
+        return GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS ||
+                GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+    }
 
     @Override
     public boolean keyPressed(KeyInput input) {
@@ -287,6 +312,8 @@ public class ProjectHelperScreen extends Screen {
                 return true;
             }
         }
+
+
         //Entferne der Blöcke aus der Liste
         if (keyCode == GLFW.GLFW_KEY_Q) {
             // Mausposition holen und skalieren
