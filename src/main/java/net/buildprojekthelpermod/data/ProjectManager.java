@@ -20,7 +20,7 @@ public class ProjectManager {
 
     private static ProjectManager INSTANCE;
 
-    // Diese Methode gibt IMMER dasselbe Objekt zurück
+
     public static ProjectManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new ProjectManager();
@@ -107,12 +107,11 @@ public class ProjectManager {
     public void createNewProject(String name) {
         BuildProject newProj = new BuildProject(name);
         projects.add(newProj);
-        // Automatisch zum neuen Projekt wechseln
         currentProjectIndex = projects.size() - 1;
         save();
     }
 
-    // 3. Hier war der Fehler: Methode nur EINMAL definieren
+
     public void nextProject() {
         if (projects.isEmpty()) return;
         currentProjectIndex++;
