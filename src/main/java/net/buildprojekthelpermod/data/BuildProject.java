@@ -5,12 +5,15 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
 
 public class BuildProject {
     private String name;
 
     private Map<String, Integer> requiredBlocks = new HashMap<>();
+    private Set<String> pinnedBlockIds = new HashSet<>();
 
     public BuildProject(String name) {
         this.name = name;
@@ -48,4 +51,39 @@ public class BuildProject {
         String id = Registries.BLOCK.getId(block).toString();
         this.requiredBlocks.put(id, amount);
     }
+    public void togglePin(Block block) {
+        if (pinnedBlockIds == null) pinnedBlockIds = new HashSet<>();
+
+        String id = Registries.BLOCK.getId(block).toString();
+        if (pinnedBlockIds.contains(id)) {
+            pinnedBlockIds.remove(id);
+        } else {
+            pinnedBlockIds.add(id);
+        }
+    }
+    public boolean isPinned(Block block) {
+        if (pinnedBlockIds == null) return false;
+
+        String id = Registries.BLOCK.getId(block).toString();
+        return pinnedBlockIds.contains(id);
+    }
+    public Set<Block> getPinnedBlocks() {
+        if (pinnedBlockIds == null){
+            pinnedBlockIds = new HashSet<>();
+        }
+        Set<Block> blocks = new HashSet<>();
+        for (String id : pinnedBlockIds) {
+            if (id == null) continue;
+
+            Identifier identifier = Identifier.tryParse(id);
+            if (identifier == null) continue;
+
+            Block block = Registries.BLOCK.get(Identifier.tryParse(id));
+            if (block != null) {
+                blocks.add(block);
+            }
+        }
+        return blocks;
+    }
+
 }

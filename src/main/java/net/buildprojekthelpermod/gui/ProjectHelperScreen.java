@@ -111,7 +111,7 @@ public class ProjectHelperScreen extends Screen {
             this.setFocused(newProjectNameField);
         }).dimensions(centerX + 145, 5, 20, 20).build());
 
-
+        // Button "X"
         ButtonWidget deleteButton = ButtonWidget.builder(Text.literal("X"), b -> {
             if (isShiftPressed()) {
                 projectManager.deleteCurrentProject();
@@ -138,7 +138,7 @@ public class ProjectHelperScreen extends Screen {
                 5,
                 180,
                 20,
-                Text.literal("Projektname")
+                Text.literal("Project name")
         );
         currentProjectNameField.setText(title);
         currentProjectNameField.setMaxLength(30);
@@ -210,7 +210,25 @@ public class ProjectHelperScreen extends Screen {
     public boolean mouseClicked(Click click, boolean doubled) {
         double mouseX = click.x();
         double mouseY = click.y();
+        int button = click.button();
 
+        if (button == 1) {
+            System.out.println("Rechtsklick erkannt bei: " + mouseX + ", " + mouseY);
+        }
+
+
+        if (button == 1){
+            if (buildListWidget.isMouseOver(mouseX, mouseY)) {
+                Block targetBlock = buildListWidget.getBlockAt(mouseX, mouseY);
+
+                if (targetBlock != null && projectManager.getCurrentProject() != null) {
+                    projectManager.getCurrentProject().togglePin(targetBlock);
+                    client.getSoundManager().play(net.minecraft.client.sound.PositionedSoundInstance.master(net.minecraft.sound.SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    saveCurrentProjectData();
+                    return true;
+                }
+            }
+        }
         if (super.mouseClicked(click, doubled)) {
             return true;
         }

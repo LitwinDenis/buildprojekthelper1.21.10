@@ -1,39 +1,36 @@
 package net.buildprojekthelpermod.gui;
 
+import net.buildprojekthelpermod.data.ProjectManager;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.Drawable;
+import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.item.ItemStack;
-
-
-
-
+import net.minecraft.client.gui.Click; // Deine Custom Click Klasse oder Library
 
 import java.util.Map;
 
 public class BuildListWidget implements Element, Drawable, Selectable {
 
+    private final MinecraftClient client;
+    private final int x, y, width, height;
+    private final Map<Block, Integer> requiredBlocks;
+    private final QuadConsumer<Block, Integer, Integer, Integer> onBlockDoubleClicked;
+
     private final int slotSize = 20;
     private int scrollOffset = 0;
 
-    @Override
-    public net.minecraft.client.gui.Selectable.SelectionType getType() {
-        return net.minecraft.client.gui.Selectable.SelectionType.NONE;
-    }
+    // Doppelklick Tracking
+    private long lastClickTime = 0;
+    private Block lastClickedBlock = null;
 
     @FunctionalInterface
     public interface QuadConsumer<T1, T2, T3, T4> {
         void accept(T1 t1, T2 t2, T3 t3, T4 t4);
     }
-
-    private final MinecraftClient client;
-    private final int x, y, width, height;
-    private final QuadConsumer<Block, Integer, Integer, Integer> onBlockDoubleClicked;
-    private final Map<Block, Integer> requiredBlocks;
-
-    private long lastClickTime = 0;
-    private Block lastClickedBlock = null;
 
     public BuildListWidget(
             MinecraftClient client,
@@ -50,13 +47,9 @@ public class BuildListWidget implements Element, Drawable, Selectable {
         this.onBlockDoubleClicked = onBlockDoubleClicked;
     }
 
-    // Fehlende Methoden (leer lassen, um Fehler zu vermeiden)
-    public void addEnteries(Map<Block, Integer> map){}
-    public void refresh(){}
-
+    // --- RENDER METHODE ---
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float tickDelta) {
-        // Raster-Darstellung wie ein Inventar
         int columns = (slotSize > 0) ? this.width / slotSize : 1;
         int index = 0;
         int startIndex = scrollOffset * columns;
@@ -80,60 +73,94 @@ public class BuildListWidget implements Element, Drawable, Selectable {
             int requiredAmount = entry.getValue();
             ItemStack stack = new ItemStack(block, requiredAmount);
 
-            // Slot Hintergrund
-            context.fill(slotX, slotY, slotX + slotSize, slotY + slotSize, 0x55000000);
-            // Item
+            // Pinned Status prüfen (Grüner Hintergrund)
+            boolean isPinned = false;
+            if (ProjectManager.getInstance().getCurrentProject() != null) {
+                isPinned = ProjectManager.getInstance().getCurrentProject().isPinned(block);
+            }
+
+            if (isPinned) {
+                // Hintergrund Transparent Grün
+                context.fill(slotX, slotY, slotX + slotSize, slotY + slotSize, 0x6000FF00);
+
+                // Grüner Rand (Manuell gezeichnet)
+                int borderColor = 0xFF00FF00;
+                context.fill(slotX, slotY, slotX + slotSize, slotY + 1, borderColor); // Oben
+                context.fill(slotX, slotY + slotSize - 1, slotX + slotSize, slotY + slotSize, borderColor); // Unten
+                context.fill(slotX, slotY, slotX + 1, slotY + slotSize, borderColor); // Links
+                context.fill(slotX + slotSize - 1, slotY, slotX + slotSize, slotY + slotSize, borderColor); // Rechts
+            } else {
+                // Standard Hintergrund Dunkel
+                context.fill(slotX, slotY, slotX + slotSize, slotY + slotSize, 0x55000000);
+            }
+
+            // Item und Text rendern
             context.drawItem(stack, slotX + 2, slotY + 2);
-            // Menge als Text
             context.drawStackOverlay(client.textRenderer, stack, slotX + 2, slotY + 2);
 
             index++;
         }
     }
-    // Neue Methode: Gibt den Block an der Mausposition zurück (oder null)
+
+    // --- WICHTIG: DIE SUCHE NACH DEM BLOCK ---
     public Block getBlockAt(double mouseX, double mouseY) {
-        // 1. Ist die Maus überhaupt über der Liste?
-        if (!isMouseOver(mouseX, mouseY)) return null;
+        // Debugging: Wo klicke ich hin?
+        // System.out.println("Suche Block bei Maus: " + mouseX + "/" + mouseY + " in Widget Bereich: " + x + "," + y);
 
-        // 2. Raster-Berechnung (dieselbe wie in mouseClicked)
-        int columns = (slotSize > 0) ? this.width / slotSize : 1;
-
-        // Relative Position im Widget
-        int relativeX = (int)(mouseX - this.x);
-        int relativeY = (int)(mouseY - this.y);
-
-        int col = relativeX / slotSize;
-        int row = relativeY / slotSize;
-
-        // Index berechnen
-        int clickedSlotIndex = (row * columns) + col;
-        int startIndex = scrollOffset * columns;
-        int actualIndex = startIndex + clickedSlotIndex;
-
-        // 3. Den Block an diesem Index finden
-        int currentIndex = 0;
-        for (Map.Entry<Block, Integer> entry : requiredBlocks.entrySet()) {
-            if (currentIndex == actualIndex) {
-                return entry.getKey(); // Gefunden!
-            }
-            currentIndex++;
+        if (mouseX < this.x || mouseX > this.x + this.width ||
+                mouseY < this.y || mouseY > this.y + this.height) {
+            return null;
         }
 
-        return null; // Nichts gefunden (leerer Slot)
+        int columns = (slotSize > 0) ? this.width / slotSize : 1;
+        int index = 0;
+        int startIndex = scrollOffset * columns;
+
+        for (Map.Entry<Block, Integer> entry : requiredBlocks.entrySet()) {
+            if (index < startIndex) {
+                index++;
+                continue;
+            }
+
+            int displayIndex = index - startIndex;
+            int col = displayIndex % columns;
+            int row = displayIndex / columns;
+
+            int slotX = this.x + col * slotSize;
+            int slotY = this.y + row * slotSize;
+
+            if (slotY + slotSize > this.y + this.height) break;
+
+            // HITBOX CHECK
+            // Wenn Maus innerhalb dieses Slots ist
+            if (mouseX >= slotX && mouseX < slotX + slotSize &&
+                    mouseY >= slotY && mouseY < slotY + slotSize) {
+
+                System.out.println("DEBUG: Block gefunden: " + entry.getKey().getName().getString());
+                return entry.getKey();
+            } else {
+                // Optional: Zeige an, wo wir gesucht haben, wenn es NICHT passt
+                // System.out.println("Check Slot: " + slotX + "/" + slotY + " - Passt nicht.");
+            }
+
+            index++;
+        }
+
+        System.out.println("DEBUG: Klick im Widget, aber kein Slot getroffen (Leerer Bereich?)");
+        return null;
     }
 
-    // ============================================
-    // FIXED: mouseClicked mit Click-Objekt
-    // ============================================
-
+    // --- MOUSE CLICKED (Für Linksklick / Doppelklick) ---
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
 
+        // Wenn Rechtsklick (Button 1), ignorieren wir das HIER und lassen den Screen das machen
         if (!isMouseOver(mouseX, mouseY) || button != 0) return false;
 
+        // Logik für Linksklick (Doppelklick zum Editieren)
         int columns = (slotSize > 0) ? this.width / slotSize : 1;
         int relativeX = (int)(mouseX - this.x);
         int relativeY = (int)(mouseY - this.y);
@@ -145,7 +172,6 @@ public class BuildListWidget implements Element, Drawable, Selectable {
         int startIndex = scrollOffset * columns;
         int actualIndex = startIndex + clickedSlotIndex;
 
-        // Finde den Block an diesem Index
         int currentIndex = 0;
         Block targetBlock = null;
         for (Map.Entry<Block, Integer> entry : requiredBlocks.entrySet()) {
@@ -156,16 +182,13 @@ public class BuildListWidget implements Element, Drawable, Selectable {
             currentIndex++;
         }
 
-        // Doppelklick-Logik
         if (targetBlock != null) {
             long now = System.currentTimeMillis();
             if (targetBlock == lastClickedBlock && now - lastClickTime < 250) {
                 int amount = requiredBlocks.get(targetBlock);
                 int targetX = this.x + col * slotSize;
                 int targetY = this.y + row * slotSize;
-
                 onBlockDoubleClicked.accept(targetBlock, targetX, targetY, amount);
-
                 lastClickTime = 0;
                 lastClickedBlock = null;
                 return true;
@@ -178,19 +201,13 @@ public class BuildListWidget implements Element, Drawable, Selectable {
         return false;
     }
 
+    // Platzhalter
+    public void addEnteries(Map<Block, Integer> map){}
+    public void refresh(){}
 
-    /* Element Interface Methoden (müssen Click nutzen) */
-
-    @Override
-    public boolean mouseReleased(Click click) {
-        return false;
-    }
-
-    @Override
-    public boolean mouseDragged(Click click, double deltaX, double deltaY) {
-        return false;
-    }
-
+    @Override public SelectionType getType() { return SelectionType.NONE; }
+    @Override public boolean mouseReleased(Click click) { return false; }
+    @Override public boolean mouseDragged(Click click, double deltaX, double deltaY) { return false; }
     @Override public void appendNarrations(NarrationMessageBuilder builder) {}
     @Override public void setFocused(boolean focused) {}
     @Override public boolean isFocused() { return false; }
