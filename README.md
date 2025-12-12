@@ -72,6 +72,4 @@ Files are automatically named based on the world name or server address:
 
 *(Screenshots will be add soon)*
 
-## 📜 License
 
-This project is licensed under the MIT License. Feel free to fork and build\!
