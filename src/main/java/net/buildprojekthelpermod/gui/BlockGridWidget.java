@@ -32,7 +32,6 @@ public class BlockGridWidget implements Element, Drawable, Selectable {
     private ItemStack hoveredStack = ItemStack.EMPTY;
     private Consumer<Block> onBlockClicked;
 
-    // FEHLER BEHOBEN: Die unvollständige Zeile 'private Click =' wurde entfernt.
 
     @Override
     public net.minecraft.client.gui.Selectable.SelectionType getType() {
@@ -93,7 +92,7 @@ public class BlockGridWidget implements Element, Drawable, Selectable {
             int slotX = x + col * slotSize;
             int slotY = y + row * slotSize;
 
-            // Verhindern von IndexOutOfBoundsException
+
             if (startIndex + i >= blocks.size()) break;
 
             Block block = blocks.get(startIndex + i);
@@ -127,26 +126,20 @@ public class BlockGridWidget implements Element, Drawable, Selectable {
         if (scrollOffset > maxRows) scrollOffset = maxRows;
     }
 
-    // ============================================
-    // KORRIGIERTE SIGNATUREN FÜR 1.21.10
-    // ============================================
+
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-        // Daten aus dem Objekt holen (achten Sie auf .getX() vs .x())
         double mouseX = click.x();
         double mouseY = click.y();
         int button = click.button();
 
-        // 1. Prüfen, ob der Klick innerhalb des Widgets liegt
         if (mouseX < this.x || mouseX >= this.x + width || mouseY < this.y || mouseY >= this.y + height) {
             return false;
         }
 
-        // 2. Nur Linksklick
         if (button != 0) return false;
 
-        // 3. Index berechnen
         int columns = (slotSize > 0) ? width / slotSize : 1;
         int startIndex = scrollOffset * columns;
 
@@ -154,7 +147,7 @@ public class BlockGridWidget implements Element, Drawable, Selectable {
         int row = (int)((mouseY - this.y) / slotSize);
         int blockIndex = startIndex + row * columns + col;
 
-        // 4. Block finden und Callback auslösen
+
         if (blockIndex >= 0 && blockIndex < blocks.size()) {
             Block clickedBlock = blocks.get(blockIndex);
 
@@ -167,9 +160,6 @@ public class BlockGridWidget implements Element, Drawable, Selectable {
         }
         return false;
     }
-
-
-    // --- Implementierung der Element Methoden (Standard Signaturen) ---
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {}
@@ -186,38 +176,32 @@ public class BlockGridWidget implements Element, Drawable, Selectable {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        // 1. Prüfen: Ist die Maus überhaupt über diesem Widget?
+
         if (!isMouseOver(mouseX, mouseY)) {
             return false;
         }
 
-        // 2. Anzahl der Spalten berechnen
         int columns = (this.width / slotSize);
         if (columns < 1) columns = 1;
-
-        // 3. WICHTIG: Die Gesamtzahl der Items nehmen, die GERADE sichtbar sind
-        // (Nutze hier deine gefilterte Liste, z.B. visibleBlocks oder filteredBlocks)
         int totalItems = blocks.size();
 
-        // 4. Berechnen, wie viele Zeilen wir insgesamt haben
-        // (Math.ceil rundet auf, damit auch unvollständige Zeilen zählen)
+
         int totalRows = (int) Math.ceil((double) totalItems / columns);
 
-        // 5. Wie viele Zeilen passen gleichzeitig auf den Bildschirm?
+
         int visibleRows = this.height / slotSize;
 
-        // 6. Das Maximum berechnen (Total Zeilen - Sichtbare Zeilen)
+
         int maxScroll = Math.max(0, totalRows - visibleRows);
 
-        // 7. Den Scroll-Wert ändern
-        // verticalAmount ist +1 (hoch) oder -1 (runter). Wir kehren es um oder passen es an.
+
         if (verticalAmount > 0) {
-            scrollOffset--; // Hoch scrollen
+            scrollOffset--;
         } else if (verticalAmount < 0) {
-            scrollOffset++; // Runter scrollen
+            scrollOffset++;
         }
 
-        // 8. Begrenzen (Clamping): Nicht unter 0 und nicht über das Maximum
+
         if (scrollOffset < 0) scrollOffset = 0;
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
 

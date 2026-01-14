@@ -10,10 +10,10 @@ import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import net.buildprojekthelpermod.gui.ProjectHelperScreen;
 import net.buildprojekthelpermod.data.ProjectManager;
-import net.buildprojekthelpermod.client.BuildHudRenderer; // Der neue Renderer
+import net.buildprojekthelpermod.client.BuildHudRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.buildprojekthelpermod.data.ProjectManager;
+
 
 
 public class buildprojekthelperclient implements ClientModInitializer {
@@ -52,12 +52,10 @@ public class buildprojekthelperclient implements ClientModInitializer {
             ProjectManager.getInstance().load();
         });
 
-        // EVENT: Wenn der Spieler die Welt verlässt (Optional, zum Speichern/Aufräumen)
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             System.out.println("Welt verlassen -> Speichere Projekte...");
             ProjectManager.getInstance().save();
-            // Optional: Manager resetten, damit im Hauptmenü nichts angezeigt wird
-            // ProjectManager.getInstance().clearAll();
+
         });
 
         MinecraftClient client = MinecraftClient.getInstance();

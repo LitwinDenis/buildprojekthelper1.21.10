@@ -75,28 +75,28 @@ public class ProjectHelperScreen extends Screen {
 
         BuildProject curProj = projectManager.getCurrentProject();
 
-        // --- BUTTONS ---
+
         String prevName = projectManager.getPreviousProjectName();
         String nextName = projectManager.getNextProjectName();
 
         if (prevName.length() > 8) prevName = prevName.substring(0, 8) + "..";
         if (nextName.length() > 8) nextName = nextName.substring(0, 8) + "..";
 
-        // Button "<"
+
         this.addDrawableChild(ButtonWidget.builder(Text.literal("<"), b -> {
             saveCurrentProjectData();
             projectManager.previousProject();
             reloadScreenData();
         }).dimensions(centerX - 140, 5, 40, 20).build());
 
-        // Button ">"
+
         this.addDrawableChild(ButtonWidget.builder(Text.literal(">"), b -> {
             saveCurrentProjectData();
             projectManager.nextProject();
             reloadScreenData();
         }).dimensions(centerX + 100, 5, 40, 20).build());
 
-        // Button "+"
+
         this.addDrawableChild(ButtonWidget.builder(Text.literal("+"), b -> {
             isCreatingProject = true;
 
@@ -109,7 +109,7 @@ public class ProjectHelperScreen extends Screen {
             this.setFocused(newProjectNameField);
         }).dimensions(centerX + 145, 5, 20, 20).build());
 
-        // Button "X"
+
         ButtonWidget deleteButton = ButtonWidget.builder(Text.literal("X"), b -> {
             if (isShiftPressed()) {
                 projectManager.deleteCurrentProject();
@@ -147,7 +147,7 @@ public class ProjectHelperScreen extends Screen {
         newProjectNameField.setVisible(false);
         this.addDrawableChild(newProjectNameField);
 
-        // --- GRID ---
+
         blockGrid = new BlockGridWidget(
                 this.client,
                 margin,
@@ -158,7 +158,7 @@ public class ProjectHelperScreen extends Screen {
         );
         this.addDrawableChild(blockGrid);
 
-        // --- SEARCH ---
+
         searchField = new TextFieldWidget(
                 this.client.textRenderer,
                 margin,
@@ -170,7 +170,7 @@ public class ProjectHelperScreen extends Screen {
         searchField.setChangedListener(this::onSearchTextChanges);
         this.addDrawableChild(searchField);
 
-        // --- LIST ---
+
         int rightPanelX = margin + leftWidth + margin;
         int rightPanelY = margin + topBarHeight;
         int rightPanelWidth = this.width - rightPanelX - margin;
@@ -187,7 +187,7 @@ public class ProjectHelperScreen extends Screen {
         );
         this.addDrawableChild(buildListWidget);
 
-        // --- AMOUNT ---
+
         amountField = new TextFieldWidget(
                 this.client.textRenderer,
                 0, 0, 50, 20, Text.literal("Anzahl")
